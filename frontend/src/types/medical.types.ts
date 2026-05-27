@@ -1,6 +1,5 @@
 export type UrgencyLevel = 'low' | 'medium' | 'high';
 
-// Session status types - centralized for consistency
 export type SessionStatus = 'pending' | 'active' | 'rejected' | 'completed' | 'feedback' | 'all';
 
 export interface Exercise {
@@ -34,7 +33,7 @@ export interface PatientContext {
   medicalHistory?: string[];
   previousSessions?: number;
   previousExercises?: Array<{ name: string; adherence?: number }>;
-  selfReportedPain?: number; // 0-10
+  selfReportedPain?: number;
   symptoms?: string[];
   injuryMechanism?: string;
   injuryOnset?: string;
@@ -43,35 +42,35 @@ export interface PatientContext {
 export interface PatientCase {
   id: string;
   patientId: string;
-  patientName?: string; // From patient_profiles.full_name
-  patientEmail?: string; // From patient_profiles.email
-  patientPhone?: string; // From patient_profiles.phone
-  patientAge?: number; // From patient_profiles.age
-  patientCaseId?: string; // From patient_profiles.case_id
-  videoUrl: string; // Keep for backwards compatibility
-  originalVideoUrl?: string; // previdurl - patient's original uploaded video
-  processedVideoUrl?: string; // postvidurl - processed video with pose analysis
+  patientName?: string;
+  patientEmail?: string;
+  patientPhone?: string;
+  patientAge?: number;
+  patientCaseId?: string;
+  videoUrl: string;
+  originalVideoUrl?: string;
+  processedVideoUrl?: string;
   injuryType: string;
-  aiAnalysis: string | any; // Can be string or JSONB object
+  aiAnalysis: string | any;
   recommendedExercise: Exercise;
-  status: SessionStatus; // Updated to use the centralized type
-  submittedAt: string; // ISO date
+  status: SessionStatus;
+  submittedAt: string;
   urgency: UrgencyLevel;
-  aiConfidence?: number; // 0-1
-  reasoning?: string | any; // Can be string or object
+  aiConfidence?: number;
+  reasoning?: string | any;
   movementMetrics?: MovementMetric[];
-  rangeOfMotion?: Record<string, number>; // e.g., { shoulderElevation: 87 }
+  rangeOfMotion?: Record<string, number>;
   painIndicators?: string[];
-  affected_model?: string; // URL to BioDigital model for AI analysis preview
-  exercise_models?: string; // Comma-separated URLs to BioDigital models for recommended exercises
-  patientNotes?: string; // Patient's notes to the doctor
+  affected_model?: string;
+  exercise_models?: string;
+  patientNotes?: string;
 }
 
 export interface PrescriptionParams {
   sets: number;
   reps: number;
-  frequency: string; // e.g., Daily, 3x/week
-  durationWeeks: number; // 2-12
+  frequency: string;
+  durationWeeks: number;
   instructions?: string;
 }
 
@@ -79,7 +78,7 @@ export interface DoctorActionLog {
   id: string;
   caseId: string;
   action: 'viewed' | 'accepted' | 'modified' | 'rejected' | 'autosaved';
-  timestamp: string; // ISO
+  timestamp: string;
   details?: Record<string, any>;
 }
 
@@ -92,8 +91,6 @@ export interface CaseStats {
   highPriorityPending: number;
   activeCount: number;
 }
-
-// New types for patient profiles and relationships
 
 export interface PatientProfile {
   id: string;
@@ -129,7 +126,7 @@ export interface TherapySession {
   caseId?: string;
   sessionType: string;
   injuryType?: string;
-  sessionData?: any; // JSON data for video analysis, exercises, etc.
+  sessionData?: any;
   aiAnalysis?: string;
   doctorNotes?: string;
   status: 'pending' | 'reviewed' | 'approved' | 'completed';

@@ -1,6 +1,3 @@
-// AI Analysis JSON Schema
-// This is what you should ask the LLM to return for each video analysis
-
 export interface MovementMetric {
   label: string;
   value: string | number;
@@ -11,59 +8,51 @@ export interface MovementMetric {
 
 export interface RangeOfMotionMeasurement {
   joint: string;
-  movement: string; // e.g., 'flexion', 'extension', 'abduction'
+  movement: string;
   degrees: number;
-  normalRange: string; // e.g., '0-180°'
+  normalRange: string;
   status: 'normal' | 'limited' | 'hypermobile';
 }
 
 export interface PainIndicator {
   location: string;
-  severity: number; // 0-10 scale
+  severity: number;
   type: 'sharp' | 'dull' | 'burning' | 'aching' | 'throbbing';
   triggers: string[];
 }
 
 export interface AIAnalysisData {
-  // Overall assessment
-  confidence: number; // 0-1 (0.85 = 85% confidence)
+  confidence: number;
   primaryDiagnosis: string;
-  injuryType: string; // replaces hardcoded 'General'
-  bodyPart: string; // replaces empty string
+  injuryType: string;
+  bodyPart: string;
 
-  // Detailed analysis
-  summary: string; // Main analysis text for doctor review
-  reasoning: string; // Why this diagnosis was reached
+  summary: string;
+  reasoning: string;
 
-  // Movement assessment
   movementMetrics: MovementMetric[];
   rangeOfMotion: RangeOfMotionMeasurement[];
   compensatoryPatterns: string[];
 
-  // Pain and symptoms
   painIndicators: PainIndicator[];
   functionalLimitations: string[];
 
-  // Risk assessment
   urgencyLevel: 'low' | 'medium' | 'high';
   urgencyReason: string;
-  redFlags: string[]; // Concerning findings that need immediate attention
+  redFlags: string[];
 
-  // Exercise recommendation
   recommendedExercise: {
-    name?: string; // Exercise name (backwards compatibility)
-    rationale: string; // Why this exercise was chosen
+    name?: string;
+    rationale: string;
     contraindications: string[];
     progressionNotes: string;
   };
 
-
-  // Follow-up recommendations
   followUpRecommendations: {
-    timeframe: string; // '1 week', '2 weeks', etc.
-    monitorFor: string[]; // Things to watch for
-    progressIndicators: string[]; // Signs of improvement
-    escalationCriteria: string[]; // When to refer or reassess
+    timeframe: string;
+    monitorFor: string[];
+    progressIndicators: string[];
+    escalationCriteria: string[];
   };
 }
 
@@ -134,39 +123,30 @@ Please analyze this physical therapy video and return a JSON response with the f
 }
 `;
 
-// Helper function to safely parse AI analysis JSON
 export function parseAIAnalysis(aiEvaluationData: any): AIAnalysisData | null {
   try {
     let parsed: any;
 
-    // Handle different input types
     if (typeof aiEvaluationData === 'string') {
-      // Try to parse as JSON string
       if (aiEvaluationData.trim().startsWith('{')) {
         parsed = JSON.parse(aiEvaluationData);
       } else {
-        // Plain text, return null to fall back
         return null;
       }
     } else if (typeof aiEvaluationData === 'object' && aiEvaluationData !== null) {
-      // Already an object (JSONB from database)
       parsed = aiEvaluationData;
     } else {
       return null;
     }
 
-    // Handle API response format: {message, success, analysis}
     if (parsed.analysis && typeof parsed.analysis === 'object') {
-      // Extract the actual analysis from the API response wrapper
       parsed = parsed.analysis;
     }
 
-    // Validate required fields for the old format
     if (parsed.confidence && parsed.primaryDiagnosis && parsed.summary) {
       return parsed as AIAnalysisData;
     }
 
-    // Handle new two-stage analysis format
     if (parsed.analysis_summary) {
       const summary = parsed.analysis_summary;
       return {
@@ -186,7 +166,7 @@ export function parseAIAnalysis(aiEvaluationData: any): AIAnalysisData | null {
           triggers: [concern]
         })) || [],
         functionalLimitations: [],
-        urgencyLevel: summary.technique_quality === 'poor' ? 'high' : 
+        urgencyLevel: summary.technique_quality === 'poor' ? 'high' :
                      summary.technique_quality === 'excellent' ? 'low' : 'medium',
         urgencyReason: summary.technique_quality ? `${summary.technique_quality} technique quality` : 'Assessment pending',
         redFlags: [],
@@ -205,7 +185,6 @@ export function parseAIAnalysis(aiEvaluationData: any): AIAnalysisData | null {
       } as AIAnalysisData;
     }
 
-    // If none of the expected formats match, return null to fall back
     return null;
   } catch (error) {
     console.error('Failed to parse AI analysis JSON:', error);
@@ -213,12 +192,9 @@ export function parseAIAnalysis(aiEvaluationData: any): AIAnalysisData | null {
   }
 }
 
-// Fallback function for backwards compatibility with existing text-only evaluations
 export function createFallbackAnalysis(textAnalysis: string | any): AIAnalysisData {
-  // Handle case where an object is passed instead of a string
   let summaryText: string;
   if (typeof textAnalysis === 'object' && textAnalysis !== null) {
-    // If it's an object with message, success, analysis structure, extract a meaningful summary
     if (textAnalysis.message && typeof textAnalysis.message === 'string') {
       summaryText = textAnalysis.message;
     } else {

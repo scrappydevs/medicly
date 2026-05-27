@@ -9,17 +9,17 @@ export interface Session {
   doctor_id?: string;
   status: SessionStatus;
   due_date?: string;
-  ai_evaluation?: any; // JSONB
+  ai_evaluation?: any;
   exercise_sets?: number;
   exercise_reps?: number;
   exercise_weight?: number;
   exercise_duration_in_weeks?: number;
   exercise_frequency_daily?: number;
   treatment_id?: number;
-  previdurl?: string; // Original video URL in Supabase
-  pose_video_id?: string; // UUID
+  previdurl?: string;
+  pose_video_id?: string;
   patient_notes?: string;
-  postvidurl?: string; // Processed video URL in Supabase
+  postvidurl?: string;
   treatment?: Treatment;
 }
 
@@ -37,16 +37,12 @@ export function usePatientSessions() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('🔍 usePatientSessions - user:', user);
-    
     if (!user?.id) {
-      console.log('⚠️ No user ID, skipping session fetch');
       setLoading(false);
       setSessions([]);
       return;
     }
 
-    console.log('📋 Fetching sessions for user:', user.id);
     fetchSessions();
   }, [user?.id]);
 
@@ -55,8 +51,6 @@ export function usePatientSessions() {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Starting session fetch via API...');
-      
       const response = await fetch(`/api/sessions?userId=${user?.id}`);
 
       if (!response.ok) {
@@ -65,18 +59,15 @@ export function usePatientSessions() {
       }
 
       const result = await response.json();
-      
-      console.log('📊 Session fetch result:', result);
 
       if (!result.success) {
         throw new Error(result.error || 'API request failed');
       }
 
-      console.log('✅ Fetched sessions via API:', result.data);
       setSessions(result.data || []);
     } catch (err) {
-      console.error('❌ Error in fetchSessions:', err);
-      
+      console.error('Error in fetchSessions:', err);
+
       if (err instanceof Error) {
         if (err.message.includes('timeout') || err.message.includes('fetch')) {
           setError('Network error. Please check your connection and try again.');
@@ -96,8 +87,6 @@ export function usePatientSessions() {
 
   const createSession = async (treatmentId: number, additionalData?: Partial<Session>) => {
     try {
-      console.log('📝 Creating session via API...');
-      
       const response = await fetch('/api/sessions', {
         method: 'POST',
         headers: {
@@ -116,24 +105,21 @@ export function usePatientSessions() {
       }
 
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error || 'API request failed');
       }
 
-      console.log('✅ Created session via API:', result.data);
       setSessions(prev => [result.data, ...prev]);
       return result.data;
     } catch (err) {
-      console.error('❌ Error in createSession:', err);
+      console.error('Error in createSession:', err);
       throw err;
     }
   };
 
   const updateSession = async (sessionId: number, updates: Partial<Session>) => {
     try {
-      console.log('📝 Updating session via API...');
-      
       const response = await fetch(`/api/sessions/${sessionId}`, {
         method: 'PUT',
         headers: {
@@ -148,16 +134,15 @@ export function usePatientSessions() {
       }
 
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error || 'API request failed');
       }
 
-      console.log('✅ Updated session via API:', result.data);
       setSessions(prev => prev.map(s => s.id === sessionId ? result.data : s));
       return result.data;
     } catch (err) {
-      console.error('❌ Error in updateSession:', err);
+      console.error('Error in updateSession:', err);
       throw err;
     }
   };

@@ -14,7 +14,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing Supabase URL' }, { status: 500 })
     }
 
-    // Use service key if available, otherwise fall back to anon key with RLS
     const key = serviceKey || anonKey
     if (!key) {
       console.error('[api/doctor/sessions] Missing both service and anon keys')
@@ -23,17 +22,12 @@ export async function GET(request: Request) {
 
     const supabase = createClient(url, key)
 
-    // Get URL parameters
     const { searchParams } = new URL(request.url)
     const doctorId = searchParams.get('doctorId')
 
     let sessions: any[] = []
 
     if (doctorId) {
-      // Filter sessions for patients assigned to this doctor
-      console.log('[api/doctor/sessions] Filtering sessions for doctor:', doctorId)
-      
-      // First get patients assigned to this doctor
       const { data: relationships, error: relationshipError } = await supabase
         .from('doctor_patient_relationships')
         .select('patient_id')
@@ -46,10 +40,8 @@ export async function GET(request: Request) {
       }
 
       const patientIds = relationships?.map(r => r.patient_id) || []
-      console.log('[api/doctor/sessions] Found patients for doctor:', patientIds.length)
 
       if (patientIds.length > 0) {
-        // Get sessions only for assigned patients
         const { data: filteredSessions, error: sessionsError } = await supabase
           .from('sessions')
           .select(`
@@ -92,7 +84,6 @@ export async function GET(request: Request) {
         sessions = filteredSessions || []
       }
     } else {
-      // No doctor filter - return all sessions (for admin or general use)
       const { data: allSessions, error } = await supabase
         .from('sessions')
         .select(`
@@ -133,8 +124,6 @@ export async function GET(request: Request) {
 
       sessions = allSessions || []
     }
-
-    console.log('[api/doctor/sessions] Returning sessions:', sessions.length)
 
     const treatmentIds = Array.from(new Set((sessions || []).map(s => s.treatment_id).filter((v): v is number => !!v)))
     let treatmentsById: Record<number, { id: number; video_link: string | null; description: string | null; name: string | null }> = {}

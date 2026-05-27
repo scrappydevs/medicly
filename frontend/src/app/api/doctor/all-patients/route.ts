@@ -14,7 +14,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Missing Supabase URL' }, { status: 500 })
     }
 
-    // Use service key if available, otherwise fall back to anon key with RLS
     const key = serviceKey || anonKey
     if (!key) {
       console.error('[api/doctor/all-patients] Missing both service and anon keys')
@@ -23,7 +22,6 @@ export async function GET() {
 
     const supabase = createClient(url, key)
 
-    // First, fetch all patient profiles (not filtered by sessions)
     const { data: patientProfiles, error: profilesError } = await supabase
       .from('patient_profiles')
       .select('id, case_id, full_name, email, phone, age')
@@ -35,11 +33,9 @@ export async function GET() {
     }
 
     if (!patientProfiles || patientProfiles.length === 0) {
-      console.log('[api/doctor/all-patients] No patient profiles found')
       return NextResponse.json({ patients: [] }, { status: 200 })
     }
 
-    // Now fetch all sessions to enrich patient data
     const { data: sessionsData, error: sessionsError } = await supabase
       .from('sessions')
       .select('patient_id, created_at, status')
@@ -49,7 +45,6 @@ export async function GET() {
       console.warn('[api/doctor/all-patients] sessions error (non-fatal):', sessionsError)
     }
 
-    // Group sessions by patient ID for aggregation
     const sessionsByPatient = new Map()
     if (sessionsData) {
       sessionsData.forEach(session => {
@@ -61,17 +56,15 @@ export async function GET() {
       })
     }
 
-    // Map all patient profiles and enrich with session data
     const mappedPatients = patientProfiles.map(profile => {
       const patientSessions = sessionsByPatient.get(profile.id) || []
 
-      // Calculate session statistics
       const totalSessions = patientSessions.length
       const lastSession = patientSessions.length > 0
-        ? patientSessions[0].created_at // Sessions are ordered by created_at desc
+        ? patientSessions[0].created_at
         : null
       const assignedAt = patientSessions.length > 0
-        ? patientSessions[patientSessions.length - 1].created_at // First session
+        ? patientSessions[patientSessions.length - 1].created_at
         : null
 
       return {
@@ -87,8 +80,6 @@ export async function GET() {
         totalSessions
       }
     })
-
-    console.log(`[api/doctor/all-patients] Returning ${mappedPatients.length} patients`)
 
     return NextResponse.json({
       patients: mappedPatients

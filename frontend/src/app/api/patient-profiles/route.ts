@@ -6,9 +6,6 @@ export async function GET(request: NextRequest) {
     const supabase = await createSupabaseServer()
     const patientData = await request.json()
 
-    console.log('📝 Creating patient profile:', patientData)
-
-    // Generate a unique case ID
     const caseId = `P-${Date.now().toString().slice(-6).padStart(6, '0')}`
 
     const { data, error } = await supabase
@@ -25,21 +22,19 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('❌ Error creating patient profile:', error)
+      console.error('Error creating patient profile:', error)
       return Response.json(
         { success: false, error: error.message },
         { status: 500 }
       )
     }
 
-    console.log('✅ Created patient profile:', data)
-
     return Response.json({
       success: true,
       data
     })
   } catch (error) {
-    console.error('❌ Error in patient profiles POST:', error)
+    console.error('Error in patient profiles POST:', error)
     return Response.json(
       { success: false, error: 'Failed to create patient profile' },
       { status: 500 }

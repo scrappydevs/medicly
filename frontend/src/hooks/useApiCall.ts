@@ -1,13 +1,11 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions, UseMutationOptions } from "@tanstack/react-query";
 
-// Base API response type
 type ApiResponse<T> = {
   data?: T;
   error?: string;
   success: boolean;
 };
 
-// Generic fetch wrapper with proper error handling
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     headers: {
@@ -31,7 +29,6 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   return result.data!;
 }
 
-// Hook for GET requests (queries)
 export function useApiQuery<T>(
   key: string | (string | number)[],
   url: string,
@@ -46,7 +43,6 @@ export function useApiQuery<T>(
   });
 }
 
-// Hook for POST/PUT/DELETE requests (mutations)
 export function useApiMutation<TData, TVariables = any>(
   url: string,
   method: "POST" | "PUT" | "DELETE" | "PATCH" = "POST",
@@ -66,7 +62,6 @@ export function useApiMutation<TData, TVariables = any>(
       });
     },
     onSuccess: (data: TData, variables: TVariables) => {
-      // Invalidate specified queries
       options?.invalidateQueries?.forEach((queryKey) => {
         queryClient.invalidateQueries({ queryKey });
       });
@@ -78,7 +73,6 @@ export function useApiMutation<TData, TVariables = any>(
   });
 }
 
-// Utility for building query keys with parameters
 export function buildQueryKey(base: string, params?: Record<string, any>): string[] {
   if (!params) return [base];
 
@@ -91,7 +85,6 @@ export function buildQueryKey(base: string, params?: Record<string, any>): strin
   return paramString ? [base, paramString] : [base];
 }
 
-// Hook for queries with parameters
 export function useApiQueryWithParams<T>(
   baseKey: string,
   url: string,

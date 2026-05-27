@@ -46,7 +46,7 @@ export function useVideoPlayer() {
   const stepFrame = useCallback((direction: 1 | -1) => {
     const v = videoRef.current;
     if (!v) return;
-    const fps = 30; // fallback if not available
+    const fps = 30;
     v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + direction * (1 / fps)));
   }, []);
 
@@ -56,7 +56,6 @@ export function useVideoPlayer() {
     if (v.requestFullscreen) v.requestFullscreen();
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target && (e.target as HTMLElement).tagName === 'INPUT') return;

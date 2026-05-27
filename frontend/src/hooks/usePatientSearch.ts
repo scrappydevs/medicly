@@ -33,7 +33,6 @@ export function usePatientSearch() {
   const assignPatient = useCallback(async (doctorId: string, patientId: string, notes?: string) => {
     try {
       await doctorApi.assignPatientToDoctor(doctorId, patientId, notes)
-      // Refresh results to update relationship status
       return true
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to assign patient'

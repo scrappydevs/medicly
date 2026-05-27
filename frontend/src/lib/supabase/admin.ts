@@ -1,4 +1,3 @@
-// Admin client (server-only) using Supabase service role key for privileged operations.
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;

@@ -13,7 +13,6 @@ export function useTreatments() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('📋 Fetching treatments via API...');
     fetchTreatments();
   }, []);
 
@@ -22,8 +21,6 @@ export function useTreatments() {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Starting treatments fetch via API...');
-      
       const response = await fetch('/api/treatments');
 
       if (!response.ok) {
@@ -32,18 +29,15 @@ export function useTreatments() {
       }
 
       const result = await response.json();
-      
-      console.log('📊 Treatments fetch result:', result);
 
       if (!result.success) {
         throw new Error(result.error || 'API request failed');
       }
 
-      console.log('✅ Fetched treatments via API:', result.data);
       setTreatments(result.data || []);
     } catch (err) {
-      console.error('❌ Error in fetchTreatments:', err);
-      
+      console.error('Error in fetchTreatments:', err);
+
       if (err instanceof Error) {
         if (err.message.includes('timeout') || err.message.includes('fetch')) {
           setError('Network error. Please check your connection and try again.');

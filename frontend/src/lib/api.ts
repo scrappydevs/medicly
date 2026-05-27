@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000'; // Fixed URL for demo
+const API_BASE_URL = 'http://localhost:8000';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -121,7 +121,6 @@ class ApiClient {
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
-    // Get token from localStorage if available
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('auth_token');
     }
@@ -147,7 +146,6 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     try {
       const headers = new Headers({ 'Content-Type': 'application/json' });
-      // Merge any provided headers
       if (options.headers) {
         const provided = new Headers(options.headers as HeadersInit);
         provided.forEach((value, key) => headers.set(key, value));
@@ -219,12 +217,10 @@ class ApiClient {
     }
   }
 
-  // Health Check
   async healthCheck(): Promise<ApiResponse<HealthStatus>> {
     return this.request<HealthStatus>('/api/health');
   }
 
-  // Authentication
   async register(userData: UserCreate): Promise<ApiResponse<{ user_id: string }>> {
     return this.request('/api/auth/register', {
       method: 'POST',
@@ -249,7 +245,6 @@ class ApiClient {
     this.clearToken();
   }
 
-  // Video Management
   async uploadVideo(
     title: string,
     exerciseType: ExerciseType,
@@ -261,7 +256,7 @@ class ApiClient {
     formData.append('title', title);
     formData.append('exercise_type', exerciseType);
     formData.append('file', file);
-    
+
     if (description) formData.append('description', description);
     if (patientId) formData.append('patient_id', patientId);
 
@@ -276,7 +271,6 @@ class ApiClient {
     return this.request<{ videos: Video[]; total: number }>(`/api/videos?limit=${limit}&offset=${offset}`);
   }
 
-  // Exercise Management
   async getExercises(exerciseType?: ExerciseType): Promise<ApiResponse<Exercise[]>> {
     const query = exerciseType ? `?exercise_type=${exerciseType}` : '';
     return this.request<Exercise[]>(`/api/exercises${query}`);
@@ -289,13 +283,11 @@ class ApiClient {
     });
   }
 
-  // Progress Tracking
   async getPatientProgress(patientId: string, exerciseType?: ExerciseType): Promise<ApiResponse<Record<string, unknown>>> {
     const query = exerciseType ? `?exercise_type=${exerciseType}` : '';
     return this.request(`/api/progress/${patientId}${query}`);
   }
 
-  // Sample Video
   async getSampleVideo(): Promise<string> {
     const response = await fetch(`${API_BASE_URL}/api/sample-video`);
     if (!response.ok) {
