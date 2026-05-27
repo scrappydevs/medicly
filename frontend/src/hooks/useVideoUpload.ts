@@ -43,15 +43,6 @@ export function useVideoUpload(options: VideoUploadOptions): UseVideoUploadRetur
       setUploadError(null);
       setUploadedVideo(null);
 
-      console.log('📹 Starting video upload:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        userId: options.userId,
-        sessionId: options.sessionId
-      });
-
-      // Create FormData following auctor_demo pattern
       const formData = new FormData();
       formData.append('file', file);
       formData.append('userId', options.userId);
@@ -59,7 +50,6 @@ export function useVideoUpload(options: VideoUploadOptions): UseVideoUploadRetur
         formData.append('sessionId', options.sessionId);
       }
 
-      // Simulate progress updates
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
           if (prev >= 90) return prev;
@@ -67,7 +57,6 @@ export function useVideoUpload(options: VideoUploadOptions): UseVideoUploadRetur
         });
       }, 200);
 
-      // Upload via API route
       const response = await fetch('/api/upload-video', {
         method: 'POST',
         body: formData,
@@ -87,10 +76,8 @@ export function useVideoUpload(options: VideoUploadOptions): UseVideoUploadRetur
         throw new Error(result.error || 'Upload failed');
       }
 
-      console.log('✅ Video upload successful:', result.data);
-      
       setUploadedVideo(result.data);
-      
+
       if (options.onUploadComplete) {
         options.onUploadComplete(result.data);
       }
@@ -99,10 +86,10 @@ export function useVideoUpload(options: VideoUploadOptions): UseVideoUploadRetur
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      console.error('❌ Video upload failed:', error);
-      
+      console.error('Video upload failed:', error);
+
       setUploadError(errorMessage);
-      
+
       if (options.onUploadError) {
         options.onUploadError(errorMessage);
       }

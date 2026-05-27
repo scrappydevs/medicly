@@ -24,7 +24,6 @@ export interface SessionVideoData {
   error: string | null;
 }
 
-// Hook following auctor_demo pattern for session video management
 export function useSessionVideo(sessionId: string) {
   const [videoData, setVideoData] = useState<SessionVideoData>({
     isLoading: true,
@@ -35,7 +34,6 @@ export function useSessionVideo(sessionId: string) {
     try {
       setVideoData(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // Fetch session data to get video URLs
       const response = await fetch(`/api/sessions/${sessionId}`);
       
       if (!response.ok) {
@@ -50,15 +48,7 @@ export function useSessionVideo(sessionId: string) {
       }
 
       const session = result.data;
-      console.log('📋 Session video data loaded:', {
-        previdurl: session.previdurl,
-        postvidurl: session.postvidurl,
-        patient_notes: session.patient_notes,
-        doctor_feedback: session.doctor_feedback,
-        status: session.status
-      });
 
-      // Build video sources following auctor_demo pattern
       const videoSources: SessionVideoData = {
         isLoading: false,
         error: null,
@@ -69,7 +59,6 @@ export function useSessionVideo(sessionId: string) {
         treatment: session.treatment
       };
 
-      // Original video from previdurl
       if (session.previdurl) {
         videoSources.originalVideo = {
           url: session.previdurl,
@@ -79,7 +68,6 @@ export function useSessionVideo(sessionId: string) {
         };
       }
 
-      // Processed video from postvidurl
       if (session.postvidurl) {
         videoSources.processedVideo = {
           url: session.postvidurl,
@@ -92,7 +80,7 @@ export function useSessionVideo(sessionId: string) {
       setVideoData(videoSources);
 
     } catch (err) {
-      console.error('❌ Error fetching session videos:', err);
+      console.error('Error fetching session videos:', err);
       setVideoData({
         isLoading: false,
         error: err instanceof Error ? err.message : 'Failed to fetch videos'
@@ -100,7 +88,6 @@ export function useSessionVideo(sessionId: string) {
     }
   };
 
-  // Load session videos on mount and when sessionId changes
   useEffect(() => {
     if (sessionId) {
       fetchSessionVideos();
@@ -108,23 +95,16 @@ export function useSessionVideo(sessionId: string) {
   }, [sessionId]);
 
   return {
-    // Video sources
     originalVideoUrl: videoData.originalVideo?.url || null,
     processedVideoUrl: videoData.processedVideo?.url || null,
-
-    // Session data
     patientNotes: videoData.patientNotes || '',
     aiEvaluation: videoData.aiEvaluation,
     doctorFeedback: videoData.doctorFeedback || '',
     sessionStatus: videoData.status,
     treatment: videoData.treatment,
-
-    // State
     isVideoReady: !videoData.isLoading && (!!videoData.originalVideo || !!videoData.processedVideo),
     isLoading: videoData.isLoading,
     error: videoData.error,
-
-    // Actions
     refetch: fetchSessionVideos
   };
-} 
+}

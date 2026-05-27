@@ -67,8 +67,7 @@ export default function ExerciseDetailPage() {
 
   const { user } = useAuth()
   const { toast } = useToast()
-  
-  // Use session video hook following auctor_demo pattern
+
   const {
     originalVideoUrl,
     processedVideoUrl,
@@ -82,12 +81,10 @@ export default function ExerciseDetailPage() {
     error: videoError,
     refetch: refetchVideos
   } = useSessionVideo(sessionId)
-  
-  // Get updateSession function from patient sessions hook
+
   const { updateSession } = usePatientSessions()
-  
-  // Use Supabase video upload hook
-  const { 
+
+  const {
     isUploading,
     uploadProgress,
     uploadError,
@@ -98,84 +95,60 @@ export default function ExerciseDetailPage() {
     userId: user?.id || '',
     sessionId,
     onUploadComplete: async (result) => {
-      console.log('✅ Video uploaded to Supabase:', result)
       setVideoId(result.id)
-      
-      // Update session with original video URL (previdurl)
+
       try {
-        console.log('📝 Updating session with original video URL...')
         await updateSession(parseInt(sessionId), {
           previdurl: result.signedUrl || result.url || result.storagePath
         })
-        console.log('✅ Session updated with previdurl')
       } catch (error) {
-        console.error('❌ Failed to update session with video URL:', error)
+        console.error('Failed to update session with video URL:', error)
       }
-      
-      // Refetch session videos to get updated URLs
+
       setTimeout(() => refetchVideos(), 1000)
     },
     onUploadError: (error) => {
-      console.error('❌ Supabase upload failed:', error)
+      console.error('Upload failed:', error)
       setError(error)
     }
   })
 
-  // Load existing session data when available
   React.useEffect(() => {
     if (existingPatientNotes && !patientNotes) {
       setPatientNotes(existingPatientNotes)
-      console.log('📝 Loaded existing patient notes')
     }
     if (existingAiEvaluation && !analysisResult) {
       setAnalysisResult(existingAiEvaluation)
-      console.log('🤖 Loaded existing AI evaluation')
     }
-    
-    // Session Status Flow:
-    // 'pending' -> waiting for doctor review
-    // 'active' -> approved by doctor, in progress  
-    // 'completed' -> analysis done, show video + progress + patient notes
-    // 'feedback' -> doctor provided feedback, show everything + doctor feedback
-    // 'rejected' -> rejected by doctor
+
     if ((sessionStatus === 'completed' || sessionStatus === 'feedback') && currentStep === 'idle') {
       setCurrentStep('complete')
-      console.log(`✅ Session status: ${sessionStatus} - showing analysis results`)
     }
   }, [existingPatientNotes, existingAiEvaluation, sessionStatus])
 
-  // Fetch session data to get video URLs
   const fetchSessionData = async () => {
     try {
       const response = await fetch(`/api/sessions/${sessionId}`)
       if (response.ok) {
-        const result = await response.json()
-        if (result.success && result.data) {
-          // setSessionData(result.data) // This state is no longer needed
-          console.log('📋 Session data loaded:', result.data)
-        }
+        await response.json()
       }
     } catch (error) {
-      console.warn('⚠️ Failed to fetch session data:', error)
+      console.warn('Failed to fetch session data:', error)
     }
   }
 
-  // Load session data on mount
   React.useEffect(() => {
     if (sessionId) {
       fetchSessionData()
     }
   }, [sessionId])
 
-  // Auto-switch to processed video when analysis completes
   React.useEffect(() => {
     if (currentStep === 'complete' && analysisResult && videoMode !== 'processed') {
-      console.log('🎯 Analysis complete, switching to processed video view')
       setVideoMode('processed')
-      // Refetch to get latest postvidurl
       refetchVideos()
     }
-  }, [currentStep, analysisResult]) // Remove refetchVideos from dependencies
+  }, [currentStep, analysisResult])
 
   const stepLabels = {
     idle: 'Ready to analyze',
@@ -225,11 +198,7 @@ export default function ExerciseDetailPage() {
   }
 
   const startAnalysis = async () => {
-    console.log('🚀 startAnalysis called!')
-    console.log('📁 selectedFile:', selectedFile)
-    
     if (!selectedFile) {
-      console.log('❌ No file selected!')
       return
     }
 
@@ -243,68 +212,47 @@ export default function ExerciseDetailPage() {
     setKeyFrames([])
 
     try {
-      console.log('🎬 Starting analysis...')
-      console.log('📁 Selected file:', selectedFile.name, selectedFile.size, selectedFile.type)
-      
-      // Step 0: Check backend health
       try {
-        console.log('🏥 Checking backend health...')
         const healthResponse = await fetch('http://localhost:8001/api/health')
         if (!healthResponse.ok) {
           throw new Error('Backend is not responding')
         }
-        const health = await healthResponse.json()
-        console.log('✅ Backend health check:', health)
+        await healthResponse.json()
       } catch (healthError) {
         throw new Error('Backend is not running. Please start the backend server.')
       }
-      
-      // Step 1: Upload video to Supabase
+
       setCurrentStep('uploading')
       setStepProgress(0)
-      
+
       let currentVideoId: string
       let uploadResult: any
-      
-             try {
-        console.log('⬆️ Starting video upload to Supabase...')
+
+      try {
         uploadResult = await uploadVideo(selectedFile)
         currentVideoId = uploadResult.id
         setVideoId(currentVideoId)
-        
-        // Store rotation information for video correction
+
         if (uploadResult.rotation !== undefined) {
           setVideoRotation(uploadResult.rotation)
-          console.log('🔄 Video rotation detected:', uploadResult.rotation, 'degrees')
-          console.log('🔄 Setting videoRotation state to:', uploadResult.rotation)
-        } else {
-          console.log('⚠️ No rotation detected in upload result')
         }
-        
-        console.log('✅ Upload completed with video ID:', currentVideoId)
-        
       } catch (uploadError) {
-        console.error('❌ Video upload failed:', uploadError)
         throw new Error(`Upload failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`)
       }
-      
+
       if (!currentVideoId) {
         throw new Error('Upload completed but no video ID received')
       }
 
-      // Wait for uploadedVideo state to be available
       let attempts = 0
       while (!uploadedVideo && attempts < 10) {
         await new Promise(resolve => setTimeout(resolve, 500))
         attempts++
-        console.log(`⏳ Waiting for uploadedVideo state (${attempts}/10)`)
       }
-      
-      // Save original video URL to session (previdurl)
+
       try {
-        console.log('💾 Saving original video URL to session...')
         const videoUrl = uploadResult.url || uploadResult.signedUrl || uploadedVideo?.url
-        
+
         const updateResponse = await fetch(`/api/sessions/${sessionId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -312,95 +260,64 @@ export default function ExerciseDetailPage() {
             previdurl: videoUrl
           })
         })
-         
+
         if (updateResponse.ok) {
-          const updatedSession = await updateResponse.json()
-          console.log('✅ Original video URL linked to session:', updatedSession.data)
-          // Refetch session videos to update display
+          await updateResponse.json()
           refetchVideos()
-        } else {
-          const errorData = await updateResponse.json()
-          console.warn('⚠️ Failed to link original video URL to session:', errorData.error)
-         }
+        }
       } catch (dbError) {
-        console.warn('⚠️ Database error linking original video to session:', dbError)
-        // Continue anyway - this is just for persistence
+        console.warn('Database error linking original video to session:', dbError)
       }
 
-      // Step 2: Process poses using backend (download from Supabase, process, upload back)
       setCurrentStep('processing_pose')
       setStepProgress(0)
-      
-      console.log('🔄 Starting pose processing for video:', currentVideoId)
-      
-      // Debug: Check what data we have available
-      console.log('🔍 Debug data for processing:', {
-        currentVideoId,
-        uploadResult,
-        uploadedVideo,
-        sessionId
-      })
-      
+
       const processingPayload = {
         video_id: currentVideoId,
         video_url: uploadResult?.url || uploadResult?.signedUrl || uploadedVideo?.url,
         storage_path: uploadResult?.storagePath || uploadedVideo?.storagePath,
         session_id: sessionId,
-        rotation: uploadResult?.rotation || videoRotation || 0 // Pass rotation information to backend
+        rotation: uploadResult?.rotation || videoRotation || 0
       }
-      
-      console.log('🔄 Processing payload rotation value:', processingPayload.rotation)
-      console.log('🔄 Sources: uploadResult.rotation =', uploadResult?.rotation, 'videoRotation state =', videoRotation)
-      
-      console.log('📋 Processing payload:', processingPayload)
-      
-      // Use the Supabase processing endpoint that will upload processed video back to bucket
+
       const processResponse = await fetch(`http://localhost:8001/api/process-supabase-video`, {
-          method: 'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(processingPayload)
-        })
+      })
 
       if (!processResponse.ok) {
         const errorText = await processResponse.text()
-        console.error('❌ Process response error:', errorText)
         throw new Error(`Pose processing failed: ${processResponse.status} - ${errorText}`)
-        }
+      }
 
-      const processResult = await processResponse.json()
-      console.log('✅ Pose processing started:', processResult)
+      await processResponse.json()
 
-      // Wait for processing to complete by polling status
-      console.log('⏳ Waiting for pose processing to complete...')
       let processingComplete = false
       let pollAttempts = 0
       let processedVideoUrl = null
-      const maxPollAttempts = 30 // 30 seconds max
+      const maxPollAttempts = 30
 
       while (!processingComplete && pollAttempts < maxPollAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second
+        await new Promise(resolve => setTimeout(resolve, 1000))
         pollAttempts++
-        
+
         try {
           const statusResponse = await fetch(`http://localhost:8001/api/status/${currentVideoId}`)
           if (statusResponse.ok) {
             const status = await statusResponse.json()
-            console.log(`📊 Processing status (${pollAttempts}/30):`, status.status, status.message)
-            
+
             if (status.status === 'completed') {
               processingComplete = true
-              processedVideoUrl = status.processed_video_url // URL from Supabase bucket
-              console.log('✅ Pose processing completed!')
-              console.log('🎬 Processed video URL:', processedVideoUrl)
+              processedVideoUrl = status.processed_video_url
             } else if (status.status === 'error' || status.status === 'failed') {
               throw new Error(`Processing failed: ${status.message}`)
             }
-            
-            // Update progress based on status
+
             setStepProgress(Math.min((pollAttempts / maxPollAttempts) * 100, 90))
           }
         } catch (statusError) {
-          console.warn('⚠️ Status check failed:', statusError)
+          console.warn('Status check failed:', statusError)
         }
       }
 
@@ -408,96 +325,65 @@ export default function ExerciseDetailPage() {
         throw new Error('Pose processing timed out after 30 seconds')
       }
 
-      // Save processed video URL to session (postvidurl)
       if (processedVideoUrl) {
         try {
-          console.log('💾 Saving processed video URL to session...')
-          const updateResponse = await fetch(`/api/sessions/${sessionId}`, {
+          await fetch(`/api/sessions/${sessionId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               postvidurl: processedVideoUrl
             })
           })
-          
-          if (updateResponse.ok) {
-            const updatedSession = await updateResponse.json()
-            console.log('✅ Processed video URL linked to session:', updatedSession.data)
-          } else {
-            const errorData = await updateResponse.json()
-            console.warn('⚠️ Failed to link processed video URL to session:', errorData.error)
-          }
         } catch (dbError) {
-          console.warn('⚠️ Database error linking processed video to session:', dbError)
+          console.warn('Database error linking processed video to session:', dbError)
         }
       }
 
       setStepProgress(100)
 
-      // Step 3: Extract key frames
       setCurrentStep('extracting_keyframes')
       setStepProgress(0)
-      
+
       await simulateStep('extracting_keyframes', 2000)
 
-      // Step 4: Claude analysis
       setCurrentStep('claude_analysis')
       setStepProgress(0)
 
-      console.log('🧠 Starting AI analysis for video:', currentVideoId)
       const analysisResponse = await fetch(`http://localhost:8001/api/two-stage-analysis/${currentVideoId}`, {
         method: 'POST',
       })
 
       if (!analysisResponse.ok) {
         const errorText = await analysisResponse.text()
-        console.error('❌ Analysis response error:', errorText)
         throw new Error(`AI analysis failed: ${analysisResponse.status} - ${errorText}`)
       }
 
       const result = await analysisResponse.json()
-      console.log('🎉 Claude analysis result:', result)
       setAnalysisResult(result)
-      
+
       if (result.key_frames) {
         setKeyFrames(result.key_frames)
       }
 
-      // Save analysis results to database
       try {
-        console.log('💾 Saving analysis results to session...')
-        
-        // Extract structured analysis data for proper parsing on frontend
         const structuredAnalysis = result?.analysis?.analysis || result?.analysis || result;
-        console.log('📊 Structured analysis data:', structuredAnalysis);
-        
-        const analysisResponse = await fetch(`/api/sessions/${sessionId}`, {
+
+        await fetch(`/api/sessions/${sessionId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            ai_evaluation: structuredAnalysis // Save structured analysis for frontend parsing
+            ai_evaluation: structuredAnalysis
           })
         })
-        
-        if (analysisResponse.ok) {
-          const updatedSession = await analysisResponse.json()
-          console.log('✅ Analysis results saved to session:', updatedSession.data)
-        } else {
-          const errorData = await analysisResponse.json()
-          console.warn('⚠️ Failed to save analysis results:', errorData.error)
-        }
       } catch (dbError) {
-        console.warn('⚠️ Database error saving analysis results:', dbError)
-        // Continue anyway - this is just for persistence
+        console.warn('Database error saving analysis results:', dbError)
       }
 
       setStepProgress(100)
       setCurrentStep('complete')
-      
-      console.log('🎉 Analysis completed successfully!')
 
     } catch (error) {
-      console.error('❌ Analysis failed:', error)
+      console.error('Analysis failed:', error)
       setError(error instanceof Error ? error.message : 'Analysis failed')
       setCurrentStep('idle')
       setStepProgress(0)
@@ -506,12 +392,7 @@ export default function ExerciseDetailPage() {
 
   const resetAnalysis = async () => {
     try {
-      console.log('🗑️ Resetting analysis and deleting existing videos...')
-      
-      // If there are existing videos, delete them from bucket and clear session URLs
       if ((originalVideoUrl || processedVideoUrl) && user?.id) {
-        console.log('🗑️ Deleting existing session videos...')
-        
         const deleteResponse = await fetch('/api/delete-session-videos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -520,21 +401,13 @@ export default function ExerciseDetailPage() {
             userId: user.id
           })
         })
-        
+
         if (deleteResponse.ok) {
-          const result = await deleteResponse.json()
-          console.log('✅ Existing videos deleted:', result)
-          
-          // Refetch to update URLs
+          await deleteResponse.json()
           setTimeout(() => refetchVideos(), 500)
-        } else {
-          const errorData = await deleteResponse.json()
-          console.warn('⚠️ Failed to delete existing videos:', errorData.error)
-          // Continue anyway - user can still upload new video
         }
       }
-      
-      // Reset local state
+
       setSelectedFile(null)
       setVideoId('')
       setCurrentStep('idle')
@@ -542,45 +415,35 @@ export default function ExerciseDetailPage() {
       setAnalysisResult(null)
       setError(null)
       setKeyFrames([])
-      setVideoMode('original') // Reset to original video mode
-      setVideoRotation(0) // Reset rotation
+      setVideoMode('original')
+      setVideoRotation(0)
       resetUpload()
-      
+
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
-      
-      console.log('✅ Analysis reset complete')
-      
     } catch (error) {
-      console.error('❌ Error resetting analysis:', error)
+      console.error('Error resetting analysis:', error)
       setError('Failed to reset analysis. Please refresh the page.')
     }
   }
 
   const getVideoUrl = () => {
     if (!videoId) return null
-    
-    // Use URLs from session data (database) when available
+
     switch (videoMode) {
       case 'original':
-        // Priority: Session previdurl > Upload result > Backend fallback
         if (originalVideoUrl) {
-          console.log('📹 Using session previdurl for original video:', originalVideoUrl)
           return originalVideoUrl
         }
-        // Fallback to backend (shouldn't be needed)
         return `http://localhost:8001/api/video/${videoId}`
-        
+
       case 'processed':
-        // Priority: Session postvidurl > Backend stream
         if (processedVideoUrl) {
-          console.log('📹 Using session postvidurl for processed video:', processedVideoUrl)
           return processedVideoUrl
         }
-        // Fallback to backend stream
         return `http://localhost:8001/api/stream/${videoId}`
-        
+
       default:
         if (originalVideoUrl) {
           return originalVideoUrl
@@ -600,25 +463,18 @@ export default function ExerciseDetailPage() {
     }
   }
 
-  // Helper function to get video rotation correction CSS
   const getVideoRotationStyle = (rotation: number, isProcessedVideo: boolean = false) => {
-    console.log('🔄 getVideoRotationStyle called:', { rotation, isProcessedVideo, videoRotationState: videoRotation });
-    
     if (rotation === 0) return {};
-    
-    // Skip CSS rotation for processed videos - they're already corrected in the backend
+
     if (isProcessedVideo) {
-      console.log('🔄 Skipping CSS rotation for processed video - already corrected in backend');
       return {};
     }
-    
-    // Apply counter-rotation to fix display for original videos only
+
     let transform = '';
     let additionalStyles = {};
-    
+
     switch (rotation) {
       case 90:
-        // Counter-rotate by -90 degrees (or +270)
         transform = 'rotate(270deg)';
         additionalStyles = {
           transformOrigin: 'center center',
@@ -633,7 +489,6 @@ export default function ExerciseDetailPage() {
         };
         break;
       case 270:
-        // Counter-rotate by -270 degrees (or +90)
         transform = 'rotate(90deg)';
         additionalStyles = {
           transformOrigin: 'center center',
@@ -644,14 +499,13 @@ export default function ExerciseDetailPage() {
       default:
         return {};
     }
-    
+
     return {
       transform,
       ...additionalStyles
     };
   }
 
-  // Extract exercise name from URL parameter
   const exerciseDisplayName = exerciseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 
   return (
@@ -685,24 +539,8 @@ export default function ExerciseDetailPage() {
           </div>
         )}
 
-        {/* 
-        UI Rendering Logic by Session Status:
-        
-        UPLOAD SECTION (only for new sessions):
-        - Show ONLY when: no videos exist AND status is not completed/feedback
-        
-        VIDEO DISPLAY SECTION: 
-        - Show when: any videos exist (new upload OR existing from database)
-        
-        ANALYSIS PROGRESS & NOTES SECTION:
-        - Show when: any video content exists OR session is completed/feedback
-        - This ensures completed sessions show their analysis results even without new uploads
-        */}
-        
-        {/* Main Analysis Interface */}
         <div className="space-y-6">
-          
-            {/* Upload Section */}
+
             {!videoId && !originalVideoUrl && !processedVideoUrl && sessionStatus !== 'completed' && sessionStatus !== 'feedback' && (
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -734,9 +572,9 @@ export default function ExerciseDetailPage() {
                       <p className="text-sm text-gray-600 mb-4">
                         {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB • Ready for analysis
                       </p>
-                      <Button 
+                      <Button
                         onClick={(e) => {
-                          e.stopPropagation() // Prevent file picker from opening
+                          e.stopPropagation()
                           startAnalysis()
                         }}
                         disabled={isUploading}
@@ -761,7 +599,6 @@ export default function ExerciseDetailPage() {
               </div>
             )}
 
-          {/* Video Display - Ultra Compact */}
             {(videoId || originalVideoUrl || processedVideoUrl) && (
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <div className="flex items-center space-x-2 mb-4">
@@ -775,10 +612,8 @@ export default function ExerciseDetailPage() {
                   )}
                 </div>
 
-              {/* Side by Side Video Display */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                
-                {/* Original Video */}
+
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-2">
                     Original Video
@@ -793,18 +628,8 @@ export default function ExerciseDetailPage() {
                         loop={false}
                         className="w-full h-full object-contain"
                         style={getVideoRotationStyle(videoRotation, false)}
-                        onLoadedData={() => {
-                          console.log('✅ Original video loaded from Supabase');
-                        }}
                         onError={(e) => {
-                          console.error('❌ Original video failed to load:', e);
-                          console.log('🔗 Attempted URL:', originalVideoUrl);
-                        }}
-                        onLoadStart={() => {
-                          console.log('🔄 Original video loading started');
-                        }}
-                        onCanPlay={() => {
-                          console.log('✅ Original video ready to play');
+                          console.error('Original video failed to load:', e);
                         }}
                         poster="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' fill='%23f3f4f6'%3e%3crect width='100%25' height='100%25'/%3e%3c/svg%3e"
                       />
@@ -868,7 +693,6 @@ export default function ExerciseDetailPage() {
                   </div>
                 </div>
 
-                {/* Pose Analysis Video */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-2">
                     Pose Analysis
@@ -883,19 +707,8 @@ export default function ExerciseDetailPage() {
                       loop={false}
                       className="w-full h-full object-contain"
                       style={getVideoRotationStyle(videoRotation, true)}
-                        onLoadedData={() => {
-                          console.log('✅ Processed video loaded');
-                          console.log('🔄 Processed video rotation state:', videoRotation);
-                        }}
                         onError={(e) => {
-                          console.error('❌ Processed video failed to load:', e);
-                          console.log('🔗 Attempted URL:', processedVideoUrl);
-                      }}
-                      onLoadStart={() => {
-                        console.log('🔄 Processed video loading started');
-                      }}
-                      onCanPlay={() => {
-                        console.log('✅ Processed video ready to play');
+                          console.error('Processed video failed to load:', e);
                       }}
                       poster="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' fill='%23000'%3e%3crect width='100%25' height='100%25'/%3e%3c/svg%3e"
                     />
@@ -972,7 +785,6 @@ export default function ExerciseDetailPage() {
                 </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex space-x-3">
                   <Button 
                     onClick={resetAnalysis}
@@ -999,17 +811,14 @@ export default function ExerciseDetailPage() {
               </div>
             )}
 
-          {/* Analysis Progress and Notes Grid - show for any video content OR completed/feedback sessions */}
           {(videoId || originalVideoUrl || processedVideoUrl || sessionStatus === 'completed' || sessionStatus === 'feedback') && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
-              {/* Analysis Progress */}
+
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Analysis Progress
               </h3>
 
-              {/* Current Step */}
                 <div style={{ marginBottom: '8px' }}>
                 <div style={{ 
                   display: 'flex', 
@@ -1035,7 +844,6 @@ export default function ExerciseDetailPage() {
                   </span>
                 </div>
 
-                  {/* Overall Progress Bar */}
                   {currentStep !== 'idle' && (
                     <div style={{ marginBottom: '6px' }}>
                       <div style={{ 
@@ -1051,7 +859,7 @@ export default function ExerciseDetailPage() {
                           {(() => {
                             const steps = Object.keys(stepLabels);
                             const currentIndex = steps.indexOf(currentStep);
-                            const totalSteps = steps.length - 1; // Exclude 'idle'
+                            const totalSteps = steps.length - 1;
                             const progressPercent = currentStep === 'complete' ? 100 : Math.round((currentIndex / totalSteps) * 100);
                             return `${progressPercent}%`;
                           })()}
@@ -1071,7 +879,7 @@ export default function ExerciseDetailPage() {
                           width: (() => {
                             const steps = Object.keys(stepLabels);
                             const currentIndex = steps.indexOf(currentStep);
-                            const totalSteps = steps.length - 1; // Exclude 'idle'
+                            const totalSteps = steps.length - 1;
                             return currentStep === 'complete' ? '100%' : `${Math.round((currentIndex / totalSteps) * 100)}%`;
                           })(),
                           transition: 'width 0.5s ease'
@@ -1080,7 +888,6 @@ export default function ExerciseDetailPage() {
                     </div>
                   )}
 
-                  {/* Upload Progress Bar (when uploading) */}
                   {isUploading && (
                     <div style={{ marginBottom: '6px' }}>
                       <div style={{ 
@@ -1115,7 +922,6 @@ export default function ExerciseDetailPage() {
                 )}
               </div>
 
-              {/* Step Indicators */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {Object.entries(stepLabels).map(([step, label]) => {
                   const isActive = currentStep === step
@@ -1144,7 +950,6 @@ export default function ExerciseDetailPage() {
                 })}
             </div>
 
-                {/* Analysis Complete Message */}
                 {currentStep === 'complete' && (
               <div style={{ 
                     padding: '6px',
@@ -1161,7 +966,6 @@ export default function ExerciseDetailPage() {
             )}
               </div>
 
-              {/* Doctor Feedback - only show if session status is 'feedback' AND doctor provided feedback */}
               {sessionStatus === 'feedback' && doctorFeedback && doctorFeedback.trim() && (
                 <div className="bg-white rounded-xl border-2 border-green-600 p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center space-x-2">
@@ -1179,7 +983,6 @@ export default function ExerciseDetailPage() {
                 </div>
               )}
 
-              {/* Patient Notes */}
               <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Notes for Your Doctor
@@ -1202,7 +1005,6 @@ export default function ExerciseDetailPage() {
                       
                       setIsSubmittingNotes(true)
                       try {
-                        // Update session with patient notes
                         const response = await fetch(`/api/sessions/${sessionId}`, {
                           method: 'PUT',
                           headers: { 'Content-Type': 'application/json' },
@@ -1210,9 +1012,8 @@ export default function ExerciseDetailPage() {
                             patient_notes: patientNotes
                           })
                         })
-                        
+
                         if (response.ok) {
-                          console.log('✅ Patient notes saved')
                           toast({
                             title: "Success",
                             description: "Notes saved successfully!",
@@ -1222,7 +1023,7 @@ export default function ExerciseDetailPage() {
                           throw new Error('Failed to save notes')
                         }
                       } catch (error) {
-                        console.error('❌ Failed to save notes:', error)
+                        console.error('Failed to save notes:', error)
                         toast({
                           title: "Error",
                           description: "Failed to save notes. Please try again.",
