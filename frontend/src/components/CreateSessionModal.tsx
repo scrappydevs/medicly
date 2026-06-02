@@ -165,15 +165,15 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
         }}>
           <div>
             <h2 style={{
-              fontSize: '2.25rem', // Increased from 1.5rem (1.5x)
+              fontSize: '1.5rem', // Further reduced to prevent overflow
               fontWeight: 'bold',
               color: 'hsl(var(--foreground))',
-              margin: '0 0 6px 0' // Increased from 4px
+              margin: '0 0 4px 0'
             }}>
               Describe Your Problem
             </h2>
             <p style={{
-              fontSize: '1.3125rem', // Increased from 0.875rem (1.5x)
+              fontSize: '0.875rem', // Further reduced to prevent overflow
               color: 'hsl(var(--muted-foreground))',
               margin: '0'
             }}>
@@ -201,29 +201,29 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
           <div style={{ marginBottom: '36px' }}> {/* Increased from 24px (1.5x) */}
             <label style={{
               display: 'block',
-              fontSize: '1.3125rem', // Increased from 0.875rem (1.5x)
+              fontSize: '0.875rem', // Further reduced to prevent overflow
               fontWeight: '600',
               color: 'hsl(var(--foreground))',
-              marginBottom: '12px' // Increased from 8px (1.5x)
+              marginBottom: '8px'
             }}>
-              <Activity style={{ width: '24px', height: '24px', display: 'inline', marginRight: '9px' }} /> {/* Increased from 16px and 6px (1.5x) */}
+              <Activity style={{ width: '16px', height: '16px', display: 'inline', marginRight: '6px' }} /> {/* Further reduced to prevent overflow */}
               Describe your problem or pain *
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Example: I have pain in my right shoulder when lifting my arm above my head, or my lower back feels stiff in the mornings..."
-              rows={6} // Increased from 4 (1.5x)
+              rows={4} // Reduced to prevent overflow
               style={{
                 width: '100%',
-                padding: '18px', // Increased from 12px (1.5x)
+                padding: '12px', // Reduced to prevent overflow
                 border: '1px solid hsl(var(--border))',
-                borderRadius: '12px', // Increased from 8px (1.5x)
+                borderRadius: '8px', // Reduced to prevent overflow
                 backgroundColor: 'hsl(var(--background))',
                 color: 'hsl(var(--foreground))',
-                fontSize: '1.3125rem', // Increased from 0.875rem (1.5x)
+                fontSize: '0.875rem', // Reduced to prevent overflow
                 resize: 'vertical',
-                minHeight: '150px' // Increased from 100px (1.5x)
+                minHeight: '100px' // Reduced to prevent overflow
               }}
               disabled={isAnalyzing || isSubmitting}
             />
@@ -234,7 +234,7 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
               alignItems: 'center'
             }}>
               <div style={{
-                fontSize: '1.125rem', // Increased from 0.75rem (1.5x)
+                fontSize: '0.75rem', // Reduced to prevent overflow
                 color: 'hsl(var(--muted-foreground))'
               }}>
                 Be specific about location, type of pain, and when it occurs
@@ -246,8 +246,8 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
                 style={{
                   backgroundColor: isAnalyzing ? 'hsl(var(--secondary))' : 'hsl(var(--primary))',
                   color: isAnalyzing ? 'hsl(var(--secondary-foreground))' : 'hsl(var(--primary-foreground))',
-                  padding: '12px 24px', // Increased from 8px 16px (1.5x)
-                  fontSize: '1.3125rem' // Increased from 0.875rem (1.5x)
+                  padding: '8px 16px', // Reduced to prevent overflow
+                  fontSize: '0.875rem' // Reduced to prevent overflow
                 }}
               >
                 {isAnalyzing ? 'Analyzing...' : 'Analyze & Select Exercise'}
@@ -265,32 +265,32 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
               border: '1px solid hsl(var(--border))'
             }}>
               <div style={{
-                fontSize: '1.125rem', // Increased from 0.75rem (1.5x)
+                fontSize: '0.75rem', // Reduced to prevent overflow
                 fontWeight: '600',
                 color: 'hsl(var(--primary))',
-                marginBottom: '12px', // Increased from 8px (1.5x)
+                marginBottom: '8px', // Reduced to prevent overflow
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
                 📋 Evaluation Exercise
               </div>
-              <div style={{ fontWeight: '600', marginBottom: '12px', fontSize: '1.5rem' }}> {/* Increased from 8px and 1rem (1.5x) */}
+              <div style={{ fontWeight: '600', marginBottom: '8px', fontSize: '1.125rem' }}> {/* Reduced to prevent overflow */}
                 {selectedTreatment.name}
               </div>
               {selectedTreatment.description && (
                 <div style={{
-                  fontSize: '1.3125rem', // Increased from 0.875rem (1.5x)
+                  fontSize: '0.875rem', // Reduced to prevent overflow
                   color: 'hsl(var(--muted-foreground))',
-                  marginBottom: '12px' // Increased from 8px (1.5x)
+                  marginBottom: '8px' // Reduced to prevent overflow
                 }}>
                   {selectedTreatment.description}
                 </div>
               )}
               {aiReasoning && (
                 <div style={{
-                  fontSize: '1.3125rem', // Increased from 0.875rem (1.5x)
+                  fontSize: '0.875rem', // Reduced to prevent overflow
                   color: 'hsl(var(--foreground))',
-                  paddingTop: '12px', // Increased from 8px (1.5x)
+                  paddingTop: '8px', // Reduced to prevent overflow
                   borderTop: '1px solid hsl(var(--border))'
                 }}>
                   <strong>Why this exercise:</strong> {aiReasoning}
@@ -314,8 +314,8 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
               onClick={onClose}
               disabled={isSubmitting}
               style={{
-                fontSize: '1.3125rem', // Increased font size (1.5x from 0.875rem)
-                padding: '12px 24px' // Increased padding (1.5x)
+                fontSize: '0.875rem', // Reduced to prevent overflow
+                padding: '8px 16px' // Reduced to prevent overflow
               }}
             >
               Cancel
@@ -326,9 +326,9 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
               style={{
                 backgroundColor: (!selectedTreatment || isSubmitting || isAnalyzing) ? 'hsl(var(--secondary))' : 'hsl(var(--primary))',
                 color: (!selectedTreatment || isSubmitting || isAnalyzing) ? 'hsl(var(--secondary-foreground))' : 'hsl(var(--primary-foreground))',
-                gap: '12px', // Increased from 8px (1.5x)
-                fontSize: '1.3125rem', // Increased font size (1.5x from 0.875rem)
-                padding: '12px 24px' // Increased padding (1.5x)
+                gap: '8px', // Reduced to prevent overflow
+                fontSize: '0.875rem', // Reduced to prevent overflow
+                padding: '8px 16px' // Reduced to prevent overflow
               }}
             >
               {isSubmitting ? (
@@ -337,7 +337,7 @@ export function CreateSessionModal({ isOpen, onClose, onCreateSession, userId }:
                 'Analyze Description First'
               ) : (
                 <>
-                  <Plus style={{ width: '24px', height: '24px' }} /> {/* Increased from 16px (1.5x) */}
+                  <Plus style={{ width: '16px', height: '16px' }} /> {/* Reduced to prevent overflow */}
                   Start Exercise Session
                 </>
               )}

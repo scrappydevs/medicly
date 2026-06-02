@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid role for patient onboarding' }, { status: 400 })
     }
 
-    const { fullName, phone, age, gender } = patientInfo
+    const { fullName, age, gender } = patientInfo
 
-    if (!fullName || !phone || !age || !gender) {
+    if (!fullName || !age || !gender) {
       return NextResponse.json({ error: 'Missing patient information' }, { status: 400 })
     }
 
@@ -78,7 +78,6 @@ export async function POST(req: NextRequest) {
         id: user.id,
         full_name: fullName,
         email: user.email,
-        phone: phone,
         age: parseInt(age),
         gender: gender,
       })

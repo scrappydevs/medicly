@@ -345,7 +345,7 @@ export default function PatientsPage() {
                             View
                           </Button>
                           
-                          {patient.relationshipStatus === 'unassigned' && (
+                          {!patients.find(p => p.id === patient.id) && (
                             <Button
                               variant="outline"
                               size="sm"

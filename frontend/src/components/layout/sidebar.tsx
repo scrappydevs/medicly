@@ -122,7 +122,7 @@ export function Sidebar() {
             flexShrink: 0
           }}>
             <Image
-              src="/mediclylogo.png"
+              src="/mediclylogoblack.png"
               alt="Medicly Logo"
               width={isCollapsed ? 40 : 32}
               height={isCollapsed ? 40 : 32}

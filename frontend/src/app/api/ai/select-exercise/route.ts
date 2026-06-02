@@ -109,22 +109,13 @@ Do not include any other text, explanations, or formatting - only the JSON objec
       );
     }
 
-    // Validate the selected exercise exists
-    const selectedExercise = evaluationMetrics.find(e => e.id === aiResult.exercise_id);
-    if (!selectedExercise) {
-      console.error('❌ Claude selected invalid exercise ID:', aiResult.exercise_id);
-      // Fallback to first exercise
-      const fallbackExercise = evaluationMetrics[0];
-      return NextResponse.json({
-        success: true,
-        exercise: fallbackExercise,
-        reasoning: 'AI selection failed, using default exercise',
-        confidence: 0.5,
-        aiResponse: aiResult
-      });
-    }
+    console.log('✅ AI selected exercise:', aiResult.exercise_name, 'ID:', aiResult.exercise_id, 'Confidence:', aiResult.confidence);
 
-    console.log('✅ AI selected exercise:', selectedExercise.name, 'Confidence:', aiResult.confidence);
+    // Create exercise object from AI response
+    const selectedExercise = {
+      id: aiResult.exercise_id,
+      name: aiResult.exercise_name
+    };
 
     return NextResponse.json({
       success: true,
